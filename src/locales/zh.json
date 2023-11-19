@@ -1,0 +1,8 @@
+{
+  "load_error": "加载失败，请尝试重新进入插件",
+  "initializing": "正在初始化插件",
+  "intro": "🦋 一键将挤到一起的中英文，数字，符号分开 :)",
+  "action": "美化空格",
+  "field_range_select": "选择要美化的字段",
+  "select_placeholder": "默认全选"
+}

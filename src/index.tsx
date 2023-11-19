@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import {
-  bitable,
-  FieldType,
-  IAttachmentField,
-  IFieldMeta,
-} from "@lark-base-open/js-sdk";
-import { Alert, AlertProps, Button, Select } from "antd";
-import pangu from "pangu";
+import { bitable } from "@lark-base-open/js-sdk";
+import { Alert } from "antd";
+import { useTranslation } from "react-i18next";
+import { initI18n } from "./i18n";
+import App from "./App";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -17,97 +14,40 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 
 function LoadApp() {
   const [initial, setInitial] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
-  const [info, setInfo] = useState("正在获取表格信息...");
-  const [alertType, setAlertType] = useState<AlertProps["type"]>("info");
-  const [textFieldList, setTextFieldList] = useState<IFieldMeta[]>([]);
-  const [selectedFieldList, setSelectedFieldList] = useState<string[]>([]);
+  const [loadErr, setLoadErr] = useState<any>(<Loading />);
+
   useEffect(() => {
     const fn = async () => {
-      const table = await bitable.base.getActiveTable();
-      const tableFieldList = await table.getFieldMetaList();
-      const textTypeFieldList = tableFieldList.filter(
-        (fieldMeta) => fieldMeta.type === FieldType.Text,
-      );
-      setInitial(false);
-      setTextFieldList(textTypeFieldList);
-      setInfo("🦋 一键将挤到一起的中英文，数字，符号分开 :)");
-      setAlertType("success");
+      // 5s 后显示加载失败
+      const timer = setTimeout(() => {
+        initI18n("en");
+        setTimeout(() => {
+          setLoadErr(<LoadErr />);
+        }, 1000);
+      }, 5000);
+
+      // 初始化语言
+      await bitable.bridge.getLanguage().then((lang) => {
+        clearTimeout(timer);
+        initI18n(lang as any);
+        setInitial(false);
+      });
     };
     fn();
   }, []);
 
-  const optimize = async () => {
-    setLoading(true);
+  if (!initial) {
+    return <App></App>;
+  }
 
-    setDone(false);
-    const table = await bitable.base.getActiveTable();
-    const fieldMetaList = await table.getFieldMetaList();
+  return loadErr;
+}
 
-    const _selectedFieldList =
-      selectedFieldList.length === 0
-        ? textFieldList.map((item) => item.id)
-        : selectedFieldList;
-    const recordIdList = await table.getRecordIdList();
-
-    for (let i = 0; i < recordIdList.length; i++) {
-      for (let j = 0; j < _selectedFieldList.length; j++) {
-        const value = await table.getCellString(
-          _selectedFieldList[j],
-          recordIdList[i],
-        );
-        const result = pangu.spacing(value);
-        table.setCellValue(_selectedFieldList[j], recordIdList[i], result);
-      }
-    }
-    setLoading(false);
-    setDone(true);
-  };
-
-  return (
-    <div>
-      {initial && <Alert message={info} type={alertType} />}
-      {!initial && (
-        <>
-          <Alert message={info} type={alertType} />
-          <div
-            style={{
-              marginTop: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-            }}
-          >
-            <span> 选择要美化的字段 </span>
-            <Select
-              style={{
-                width: "100%",
-              }}
-              placeholder="默认全选"
-              options={textFieldList.map((item) => ({
-                label: item.name,
-                value: item.id,
-              }))}
-              value={selectedFieldList}
-              onChange={(value) => {
-                setSelectedFieldList(value);
-              }}
-              defaultValue={[]}
-              mode="multiple"
-            ></Select>
-            <Button
-              loading={loading}
-              style={{
-                width: "100%",
-              }}
-              onClick={optimize}
-            >
-              {done ? "✅" : "🦋"} 空格美化
-            </Button>
-          </div>
-        </>
-      )}
-    </div>
-  );
+function Loading() {
+  const { t } = useTranslation();
+  return <Alert message={t("initializing")} type="info" />;
+}
+function LoadErr() {
+  const { t } = useTranslation();
+  return <div>{t("load_error")}</div>;
 }

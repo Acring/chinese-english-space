@@ -1,0 +1,8 @@
+{
+  "load_error": "Loading failed, please try re-entering the plugin",
+  "initializing": "Initializing plugin",
+  "intro": "🦋 Instantly separate squeezed together Chinese, English, numbers, and symbols :)",
+  "action": "Beautify Spaces",
+  "field_range_select": "Select the field to beautify",
+  "select_placeholder": "Select All by Default"
+}
